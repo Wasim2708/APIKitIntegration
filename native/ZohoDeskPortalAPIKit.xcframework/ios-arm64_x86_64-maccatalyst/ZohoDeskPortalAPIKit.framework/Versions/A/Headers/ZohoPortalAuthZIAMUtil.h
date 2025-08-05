@@ -1,0 +1,140 @@
+//
+//  ClientZIAMUtil.h
+//  SSO_Demo
+//
+//  Created by Kumareshwaran on 8/7/15.
+//  Copyright © 2015 Zoho. All rights reserved.
+//
+
+#import <UIKit/UIKit.h>
+#include "ZohoDeskPortalAPIKit/ZohoPortalAuthConstants.h"
+#import "ZohoDeskPortalAPIKit/ZohoPortalAuthToken.h"
+
+static const long wmsTimeCheckMargin = 420000 ;
+
+typedef void (^requestSuccessBlock)(NSString *token);
+typedef void (^requestWMSSuccessBlock)(NSString *token,long expiresMillis);
+
+typedef void (^requestFailureBlock)(NSError *error);
+
+typedef void (^requestLogoutSuccessBlock)(void);
+typedef void (^requestUserInfoBlock)(NSDictionary *userinfo);
+
+@interface ZohoPortalAuthZIAMUtil :NSObject
+{
+@public
+    NSString *UrlScheme;
+    NSString *ma_portalID;
+    NSString *ma_accountsPortalURL;
+#if !CP_APP__EXTENSION_API_ONLY
+    UIWindow *MainWindow;
+#endif
+    requestSuccessBlock finalSuccessBlock;
+    requestFailureBlock finalFailureBlock;
+    BOOL isLoadingInWebview;
+    NSString* UrlParams;
+    NSString* customURL;
+    NSString * customSignUpURL;
+    
+    NSString *ScopeEnhancementUrl;
+    NSString *ScopeEnhancementPortalID;
+    NSString *ScopeEnhancementAccountsPortalURL;
+    
+}
+
+@property (nonatomic, weak) id  <NSURLSessionDataDelegate>delegate;
+
+@property(nonatomic, strong) NSString *ExtensionAppGroup;
+@property(nonatomic, strong) NSString* BaseUrl;
+@property(nonatomic, strong) NSString* PortalID;
+@property(nonatomic, strong) NSString* ClientSecret;
+@property(nonatomic, strong) NSString* ClientID;
+@property(nonatomic, strong) NSString* Scopes;
+@property(nonatomic, strong) NSString* AppName;
+@property(nonatomic) BOOL isDefaultScopesEnabled;
+@property BOOL shoulduseASWebAuthenticationSession;
+@property BOOL shouldUseWKWebView;
+
+@property BOOL shouldShowNewSignIn;
+
++ (ZohoPortalAuthZIAMUtil *)sharedUtil;
+-(BOOL)handleURL:url sourceApplication:sourceApplication annotation:annotation;
+
+-(BOOL)handleURL:url sourceApplication:sourceApplication;
+
+
+#if !TARGET_OS_WATCH
+- (void) initWithClientID: (NSString*)clientID
+                    ClientSecret: (NSString*)clientSecret
+                 PortalID:(NSString *)portalID
+                    Scope:(NSArray*)scopearray
+                URLScheme:(NSString*)URLScheme
+               MainWindow:(UIWindow*)mainWindow
+                AccountsPortalURL:(NSString*)accountsPortalURL;
+#endif
+
+- (void) initExtensionWithClientID:(NSString*)clientID
+                            ClientSecret: (NSString*)clientSecret
+                            PortalID:(NSString *)portalID
+                             Scope:(NSArray*)scopearray
+                         URLScheme:(NSString*)URLScheme
+                         AccountsPortalURL:(NSString*)accountsPortalURL;
+
+-(void)clearClientDetailsForFirstLaunch;
+
+-(BOOL)isUserSignedIn;
+
+-(BOOL)isUserSignedInForPortalID:(NSString *)portalID;
+
+- (void)setHavingAppExtensionWithAppGroup:(NSString *)appGroup;
+
+
+-(void)getOauth2Token:(requestSuccessBlock)successBlock failure:(requestFailureBlock)failureBlock;
+
+-(void)getOauth2TokenForPortalID:(NSString *)portalID havingAccountsPortalURL:(NSString *)accountsPortalURL success:(requestSuccessBlock)successBlock failure:(requestFailureBlock)failureBlock;
+
+- (void) getTokenForWMSWithSuccess:(requestWMSSuccessBlock)success andFailure:(requestFailureBlock)failure;
+//-(ZohoPortalAuthToken *)getSyncOAuthToken;
+
+- (NSDictionary *)giveOAuthDetailsForWatchApp;
+
+-(void)setOAuthDeteailsInKeychainForWatchApp:(NSDictionary *)OAuthDetails;
+
+- (void) presentInitialViewControllerWithSuccess:(requestSuccessBlock)success andFailure:(requestFailureBlock)failure;
+
+- (void) presentInitialViewControllerWithCustomParams:(NSString *)urlParams success:(requestSuccessBlock)success andFailure:(requestFailureBlock)failure;
+- (void) presentInitialViewControllerWithCustomURL:(NSString *)url success:(requestSuccessBlock)success andFailure:(requestFailureBlock)failure;
+
+- (void) presentInitialViewControllerSignUpHavingURL:(NSString *)signupUrl success:(requestSuccessBlock)success andFailure:(requestFailureBlock)failure;
+
+- (void) presentInitialViewControllerForPortalID:(NSString *)portalID havingAccountsPortalURL:(NSString *)accountsPortalURL Success:(requestSuccessBlock)success andFailure:(requestFailureBlock)failure;
+
+- (void) getOAuthTokenForRemoteUser:(NSString *)userToken tokenType:(ZohoPortalAuthRemoteLoginType)type havingSuccess:(requestSuccessBlock)success andFailure:(requestFailureBlock)failure;
+- (void) getOAuthTokenForRemoteUser:(NSString *)userToken
+                          tokenType:(ZohoPortalAuthRemoteLoginType)type
+                      havingBaseURL:(NSURL* _Nullable)baseURL
+                      havingSuccess:(requestSuccessBlock)success
+                         andFailure:(requestFailureBlock)failure ;
+-(void)removeAllScopesWithsuccess:(requestLogoutSuccessBlock)successBlock failure:(requestFailureBlock)failureBlock;
+
+-(void)removeAllScopesForPortalID:(NSString *)portalID havingAccountsPortalURL:(NSString *)accountsPortalURL success:(requestLogoutSuccessBlock)successBlock failure:(requestFailureBlock)failureBlock;
+
+-(NSString *)getIAMSignInURLForLoadingInWebView;
+-(void)continueLoginFromWebviewHavingURL:(NSURL *)url WithSuccess:(requestSuccessBlock)success andFailure:(requestFailureBlock)failure;
+
+-(void)enhanceScopesWithSuccess:(requestSuccessBlock)success andFailure:(requestFailureBlock)failure;
+-(void)enhanceScopesForPortalID:(NSString *)portalID havingAccountsPortalURL:(NSString *)accountsPortalURL success:(requestSuccessBlock)successBlock failure:(requestFailureBlock)failureBlock;
+
+-(void)enhanceScopesForPortalID:(NSString *)portalID havingAccountsPortalURL:(NSString *)accountsPortalURL havingCustomParams:(NSDictionary<NSString*, NSString*> * _Nullable)customQueryParams success:(requestSuccessBlock)successBlock failure:(requestFailureBlock)failureBlock;
+
+//Internal Methods
+-(void)showNetworkActivityIndicator;
+-(void)hideNetworkActivityIndicator;
+-(NSString *) getUserAgentString;
+-(void)fetchAccessTokenFromServerForPortalID:(NSString *)portalID havingAccountsPortalURL:(NSString *)accountsPortalURL success:(requestSuccessBlock)successBlock failure:(requestFailureBlock)failureBlock;
+-(NSString *)getEncodedStringForString:(NSString *)str;
+-(void)fetchUserInfo:(requestUserInfoBlock)successBlock failure:(requestFailureBlock)failureBlock;
+-(void)fetchUserInfoForPortalID:(NSString *)portalID havingAccountsPortalURL:(NSString *)accountsPortalURL success:(requestUserInfoBlock)successBlock failure:(requestFailureBlock)failureBlock;
+-(void)checkAndLogout:(requestFailureBlock)logoutBlock;
+- (UIViewController*)topViewController;
+@end
